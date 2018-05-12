@@ -1,0 +1,23 @@
+#!/bin/sh
+#|-*- mode:lisp -*-|#
+#|
+exec ros -Q -- $0 "$@"
+|#
+(progn ;;init forms
+  (ros:ensure-asdf)
+  #+quicklisp (ql:quickload '(utsushiyo) :silent t))
+
+(defpackage :ros.script.utsushiyo
+  (:use :cl)
+  (:import-from :utsushiyo
+		:make-project-env
+		:delete-project-env
+		:config-dir
+		:get-help
+                :project-config-boostrap))
+(in-package :ros.script.utsushiyo)
+
+(defun main (&rest argv)
+  (declare (ignorable argv))
+  (config-dir (make-project-env (format nil "~A" (car argv)))))
+;;; vim: set ft=lisp lisp:
