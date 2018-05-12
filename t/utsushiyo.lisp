@@ -16,8 +16,8 @@
 				:project-root-path (namestring
 						    (directory-namestring
 						     (asdf:system-relative-pathname 'utsushiyo "")))
-				:config-dir (concagtenate 'string utsushiyo::+user-home-dirname+ ".utsushiyo/"))))
-	   (ok (bootstrap))
+				:config-dir (concatenate 'string utsushiyo::+user-home-dirname+ ".utsushiyo/"))))
+	   (bootstrap)
 	   (is-type (get-help "example" (make-project-env "utsushiyo")) 'string)
 	   (is-type (project-env-name test-instance) 'string)
 	   (is-type (project-root-path test-instance) 'string)
