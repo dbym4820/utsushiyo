@@ -1,5 +1,7 @@
 # Utsushiyo - Common Lisp Local Configuration Management Framework -
 
+[![Build Status](https://travis-ci.org/dbym4820/utsushiyo.svg?branch=master)](https://travis-ci.org/dbym4820/utsushiyo)
+
 ## Usage
 
 Management Application Configuration through Local File about Configuration like below.
