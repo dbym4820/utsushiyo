@@ -4,7 +4,7 @@
 
 ## Usage
 
-Management Application Configuration through Local File about Configuration like below.
+Management Application Configuration via Local File about Configuration like below.
 
 ```
 # When you want to create a project named "blah" and define configuration in Own home directory
@@ -22,6 +22,31 @@ explanation about this command
 ```
 
 You have to load the project which you wanna create configs by quicklisp (or roswell) in your local environment before you use utsushiyo.
+
+## Other Usage
+
+Set/Get environment parameter via Common Lisp.
+
+```
+CL-USER> (ql:quickload :utsushiyo)
+To load "utsushiyo":
+  Load 1 ASDF system:
+    utsushiyo
+; Loading "utsushiyo"
+[package utsushiyo].
+(:UTSUSHIYO)
+CL-USER> (utsushiyo:set-attribute "sample-project" "test-attrbute" "blah blah blah")
+"blah blah blah"
+CL-USER> (utsushiyo:get-attribute "sample-project" "test-attribute")
+"blah blah blah"
+
+=================================================================================
+
+$ ls ~/.sample-project
+helps  test-attribute
+$ cat ~/.sample-project/test-attribute
+blah blah blah
+```
 
 ## Installation
 
