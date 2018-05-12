@@ -26,6 +26,8 @@ exec ros -Q -- $0 "$@"
 	   (format t "~A" (config-dir (make-project-env option-1))))
 	  ((string= command "-h")
 	   (format t "~A" (get-help option-2 option-1)))
+	  ((string= command "-c")
+	   (format t "~A" (project-config-bootstrap option-1)))
 	  (t
 	   (format t "Invalid Input")))))
 ;;; vim: set ft=lisp lisp:
