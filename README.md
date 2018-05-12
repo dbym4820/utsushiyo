@@ -1,6 +1,10 @@
 # Utsushiyo - Common Lisp Local Configuration Management Framework -
 
+<img src="./img/icon.png" width="300px" />
+
 [![Build Status](https://travis-ci.org/dbym4820/utsushiyo.svg?branch=master)](https://travis-ci.org/dbym4820/utsushiyo)
+[![Quicklisp](http://quickdocs.org/badge/utsushiyo.svg)](http://quickdocs.org/utsushiyo/)
+
 
 ## Usage
 
