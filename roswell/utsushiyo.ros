@@ -19,5 +19,5 @@ exec ros -Q -- $0 "$@"
 
 (defun main (&rest argv)
   (declare (ignorable argv))
-  (format nil "~A" `(config-dir (make-project-env ,(format nil "~A" (car argv))))))
+  (format t "~A" (config-dir (make-project-env (format nil "~A" (car argv))))))
 ;;; vim: set ft=lisp lisp:
