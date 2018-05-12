@@ -14,7 +14,7 @@ exec ros -Q -- $0 "$@"
 		:delete-project-env
 		:config-dir
 		:get-help
-                :project-config-boostrap))
+                :project-config-bootsrap))
 (in-package :ros.script.utsushiyo)
 
 (defun main (&rest argv)
