@@ -94,6 +94,7 @@ explanation about this command
 
 You need to make your project composed as same as below
 
+```
 -- yout-common-lisp-project-dir/
 ├ README.md
 ├ your-common-lisp.asd
@@ -102,6 +103,7 @@ You need to make your project composed as same as below
 |	├ **helps/**
 |		├ **help-sentence**
 ├ t/
+```
 
 ## Author
 
