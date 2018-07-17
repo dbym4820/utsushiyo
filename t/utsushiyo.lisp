@@ -22,6 +22,6 @@
 	   (is-type (project-env-name test-instance) 'string)
 	   (is-type (project-root-path test-instance) 'string)
 	   (is-type (config-dir test-instance) 'string)))
-	   
+
 		 
 (finalize)

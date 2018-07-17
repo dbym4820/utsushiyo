@@ -25,7 +25,9 @@
 	   :get-help
 	   :defhelp
 	   :bootstrap
-	   :project-config-bootstrap))
+	   :project-config-bootstrap
+	   :find-system-dir
+	   :copy-file))
 (in-package :utsushiyo)
 
 #| 
