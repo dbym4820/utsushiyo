@@ -1,5 +1,5 @@
 (defsystem "utsushiyo"
-  :version "0.1.0"
+  :version "0.2.0"
   :author "Tomoki ABURATANI"
   :license "MIT"
   :depends-on (:cl-ppcre
@@ -15,9 +15,10 @@
 		 (:module "config"
 		  :components
 		  ((:static-file "example-attr")))
-		 (:module "help"
+		 (:module "helps"
 		  :components
-		  ((:static-file "example"))))))
+		  ((:static-file "example")
+		   (:static-file "roswell-script"))))))
   :description "Common Lisp Local Configuration Management Framework"
   :long-description
   #.(read-file-string

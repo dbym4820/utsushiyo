@@ -6,7 +6,7 @@ exec ros -Q -- $0 "$@"
 (progn ;;init forms
   (ros:ensure-asdf)
   (unless (find-package :utsushiyo)
-    (ql:quickload :utsushiyo :silent t)))
+    (ql:quickload '(utsushiyo uiop) :silent t)))
 
 (defpackage :ros.script.utsushiyo
   (:use :cl)
@@ -19,20 +19,38 @@ exec ros -Q -- $0 "$@"
 (in-package :ros.script.utsushiyo)
 
 (defun main (&rest argv)
-  (let ((command (first argv))
-        (option-1 (second argv))
-        (option-2 (third argv))
-	(option-3 (fourth argv)))
-    (cond ((string= command "-r")
-	   (format t "~A" (config-dir (make-project-env option-1))))
-	  ((string= command "-h")
-	   (format t "~A" (get-help option-2 option-1)))
-	  ((string= command "-e")
-	   (format t "~A" (project-config-bootstrap option-1)))
-	  ((string= command "-s")
-	   (format t "~A" (set-attribute option-1 option2 option3)))
-	  ((string= command "-g")
-	   (format t "~A" (set-attribute option-1 option2)))
-	  (t
-	   (format t "Invalid Input")))))
+  (destructuring-bind (&optional command arg1 arg2 arg3 &rest rest) argv
+    (declare (ignorable command arg1 arg2 arg3 rest))
+    ;; (format t "~A" (utsushiyo:get-help "roswell-script" utsushiyo::*utsushiyo-project*))))
+    (cond ((and
+    	    (or
+    	     (string= command "-h")
+    	     (string= command "help"))
+    	     arg1 arg2)
+    	   (format t "~A" (get-help arg1 arg2)))
+    	  ((or
+    	    (string= command "-h")
+    	    (string= command "help"))
+    	   (format t "~A" (utsushiyo:get-help "roswell-script" utsushiyo::*utsushiyo-project*)))
+    	  ((or (string= command "-i")
+    	       (string= command "init"))
+    	   (utsushiyo:bootstrap))
+    	  ((or
+    	    (string= command "-r"))
+    	   (string= command "conf-dir")
+    	   (format t "~A" (config-dir (make-project-env arg1))))
+    	  ((and
+    	    (or (string= command "-e") (string= command "new-project"))
+    	    arg1)
+    	   (format t "~A" (project-config-bootstrap arg1)))
+    	  ((or
+    	    (string= command "-s")
+    	    (string= command "set-attribute"))
+    	   (format t "~A" (utsushiyo:set-attribute arg1 arg2 arg3)))
+    	  ((or
+    	    (string= command "-g")
+    	    (string= command "get-attribute"))
+    	   (format t "~A" (utsushiyo:get-attribute arg1 arg2)))
+    	  (t
+    	   (format t "Invalid Input~%~A~&" "")))));;(get-help "roswell-script" "utsushiyo"))))))
 ;;; vim: set ft=lisp lisp:

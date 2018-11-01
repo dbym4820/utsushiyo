@@ -72,13 +72,19 @@ Project class
 					      ".utsushiyo/"
 					      project-name "/"))))
 
-(defgeneric ensure-project-env (project))
-(defmethod ensure-project-env ((project project-env))
-  (make-directory (config-dir project)))
+(defgeneric ensure-project-env (project)
+  (:method ((project project-env))
+    (make-directory (config-dir project))))
 
-(defgeneric delete-project-env (project))
-(defmethod delete-project-env ((project project-env))
-  (delete-directory-and-files (config-dir project)))
+(defgeneric ensure-project-sub-directory (project directory-name)
+  (:method ((project project-env) (directory-name string))
+    (make-directory
+     (format nil "~A~A/" (config-dir project) directory-name))))
+
+
+(defgeneric delete-project-env (project)
+  (:method ((project project-env))
+    (delete-directory-and-files (config-dir project))))
 
 #|
 Attribute utilities
@@ -133,19 +139,13 @@ Attribute utilities
 #|
 Help utilities
 |#
-(defgeneric defhelp (command-name source-project target-project))
-(defmethod defhelp ((command-name string) (source-project project-env) (target-project project-env))
-  (copy-file
-   (concatenate 'string (config-dir source-project) "src/helps/" command-name)
-   (concatenate 'string (config-dir target-project) "helps/" command-name)
-   :overwrite t))
-(defmethod defhelp ((command-name string) (source-project project-env) (target-project string))
-  (copy-file
-   (concatenate 'string (project-root-path source-project) "src/helps/" command-name)
-   (concatenate 'string target-project command-name)
-   :overwrite t))
+(defgeneric defhelp (target-project-env command-name)
+  (:method ((target-project-env project-env) (command-name string))
+    (let ((base-file (concatenate 'string (project-root-path target-project-env) "src/helps/" command-name))
+	  (new-file-name (concatenate 'string (config-dir target-project-env) "helps/" command-name)))
+      (copy-file base-file new-file-name :overwrite t))))
 
-(defgeneric get-help (command project))
+(defgeneric get-help (command-name project))
 (defmethod get-help ((help-command string) (project project-env))
   (get-attribute-sentence project (concatenate 'string "helps/" help-command)))
 (defmethod get-help ((help-command string) (project string))
@@ -159,10 +159,13 @@ Bootstrapping
 
 (defun bootstrap ()
   (ensure-project-env *utsushiyo-project*)
-  (defhelp "example" *utsushiyo-project* (concatenate 'string +user-home-dirname+ ".utsushiyo/utsushiyo/helps/")))
+  (progn
+    (ensure-project-sub-directory *utsushiyo-project* "helps")
+    (ensure-project-sub-directory *utsushiyo-project* "config")
+    (defhelp *utsushiyo-project* "example")
+    (defhelp *utsushiyo-project* "roswell-script")))
 
 (defun project-config-bootstrap (project-env-name)
   (let ((project-env-instance (make-project-env project-env-name)))
     (ensure-project-env project-env-instance)
-    (defhelp "example" project-env-instance (concatenate 'string +user-home-dirname+ ".utsushiyo/" project-env-name "/helps/"))))
-  
+    (set-help project-env-instance "example")))
