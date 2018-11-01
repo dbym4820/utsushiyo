@@ -69,7 +69,8 @@ Project class
 				 project-config-dir
 				 (concatenate 'string
 					      +user-home-dirname+
-					      "." project-name "/"))))
+					      ".utsushiyo/"
+					      project-name "/"))))
 
 (defgeneric ensure-project-env (project))
 (defmethod ensure-project-env ((project project-env))
@@ -79,6 +80,9 @@ Project class
 (defmethod delete-project-env ((project project-env))
   (delete-directory-and-files (config-dir project)))
 
+#|
+Attribute utilities
+|#
 ;; (get-attribute :sample-project "user/user-name") => "tomoki"
 ;; (get-attribute (make-project-env "sample-project" :project-config-dir "/home/user/.sample-project/") "user/user-name") => "tomoki"
 (defgeneric get-attribute (project attribute-name))
@@ -114,11 +118,15 @@ Project class
 	    do (setf return-string (format nil "~A~A~%" return-string line))))
     (format nil "~A" return-string)))
 
-;; (set-attribute :sample-project "user/user-name" "tomoki")
+;; (set-attribute "sample-project" "user/user-name" "tomoki")
 ;; (set-attribute (make-project-env "sample-project" :project-config-dir "/home/user/.sample-project/") "user/user-name" "tomoki")
 (defgeneric set-attribute (project attribute-name attribute-content))
 (defmethod set-attribute ((project project-env) (attribute-name string) (attribute-content string))
   (let ((f-name (concatenate 'string (config-dir project) attribute-name)))
+    (with-open-file (file-var f-name :direction :output :if-exists :overwrite :if-does-not-exist :create)
+      (write-line attribute-content file-var))))
+(defmethod set-attribute ((project string) (attribute-name string) (attribute-content string))
+  (let ((f-name (concatenate 'string (config-dir (make-project-env project)) attribute-name)))
     (with-open-file (file-var f-name :direction :output :if-exists :overwrite :if-does-not-exist :create)
       (write-line attribute-content file-var))))
 
@@ -151,11 +159,10 @@ Bootstrapping
 
 (defun bootstrap ()
   (ensure-project-env *utsushiyo-project*)
-  (defhelp "example" *utsushiyo-project* (concatenate 'string +user-home-dirname+ ".utsushiyo/helps/")))
-
+  (defhelp "example" *utsushiyo-project* (concatenate 'string +user-home-dirname+ ".utsushiyo/utsushiyo/helps/")))
 
 (defun project-config-bootstrap (project-env-name)
   (let ((project-env-instance (make-project-env project-env-name)))
     (ensure-project-env project-env-instance)
-    (defhelp "example" project-env-instance (concatenate 'string +user-home-dirname+ ".utsushiyo/helps/"))))
+    (defhelp "example" project-env-instance (concatenate 'string +user-home-dirname+ ".utsushiyo/" project-env-name "/helps/"))))
   
