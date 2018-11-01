@@ -19,15 +19,20 @@ exec ros -Q -- $0 "$@"
 (in-package :ros.script.utsushiyo)
 
 (defun main (&rest argv)
-  (let ((command (first argv)) ;; help-command
-        (option-1 (second argv)) ;; project-name
-        (option-2 (third argv))) ;; command-name
+  (let ((command (first argv))
+        (option-1 (second argv))
+        (option-2 (third argv))
+	(option-3 (fourth argv)))
     (cond ((string= command "-r")
 	   (format t "~A" (config-dir (make-project-env option-1))))
 	  ((string= command "-h")
 	   (format t "~A" (get-help option-2 option-1)))
-	  ((string= command "-c")
+	  ((string= command "-e")
 	   (format t "~A" (project-config-bootstrap option-1)))
+	  ((string= command "-s")
+	   (format t "~A" (set-attribute option-1 option2 option3)))
+	  ((string= command "-g")
+	   (format t "~A" (set-attribute option-1 option2)))
 	  (t
 	   (format t "Invalid Input")))))
 ;;; vim: set ft=lisp lisp:
