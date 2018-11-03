@@ -166,6 +166,13 @@ Help utilities
 	  (concatenate 'string
 		       ,attribute-type-name
 		       "/"
+		       command-name)))
+       (:method ((project project-env) (command-name string))
+	 (get-attribute
+	  project
+	  (concatenate 'string
+		       ,attribute-type-name
+		       "/"
 		       command-name))))
      (setf *package* package)))
 
