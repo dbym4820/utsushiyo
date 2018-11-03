@@ -1,9 +1,11 @@
+(in-package :cl-user)
 (defpackage utsushiyo
   (:use :cl)
   (:import-from :alexandria
                 :read-file-into-string)
   (:import-from :uiop
                 :directory-exists-p
+		:file-exists-p
 		:delete-file-if-exists)
   (:import-from :uiop/common-lisp
                 :user-homedir-pathname)
@@ -11,7 +13,12 @@
 		:copy-file
 	        :list-directory
 	        :walk-directory
-	        :delete-directory-and-files)
+	        :delete-directory-and-files
+		:directory-pathname-p
+		:merge-pathnames-as-directory
+                :merge-pathnames-as-file)
+  (:import-from :cl-ppcre
+		:split)
   (:export :project-env
            :project-env-name
 	   :project-root-path
@@ -27,7 +34,11 @@
 	   :bootstrap
 	   :project-config-bootstrap
 	   :find-system-dir
-	   :copy-file))
+	   :copy-file
+	   :defgetter
+	   :get-help
+	   :get-config
+	   :get-env))
 (in-package :utsushiyo)
 
 #| 
@@ -53,18 +64,36 @@ Directory utilities
 (defun find-system-dir (system-name-symbol)
   (eval `(namestring (directory-namestring (asdf:system-relative-pathname ',system-name-symbol "")))))
 
+(defun copy-directory (from to)
+  (flet ((rel-path (parent child)
+           (subseq (namestring child)
+                   (length (namestring parent)))))
+    (walk-directory from
+		    (lambda (child)
+		      (if (directory-pathname-p child)
+			  (ensure-directories-exist
+			   (merge-pathnames-as-directory to (rel-path from child)))
+			  (copy-file child
+				     (merge-pathnames-as-file
+				      to
+				      (rel-path from child))
+				     :overwrite t)))
+		    :directories :breadth-first)))
+
 #|
 Project class
 |#
 (defclass project-env ()
   ((project-env-name :initarg :project-env-name :initform "sample-project" :accessor project-env-name)
    (project-root :initarg :project-root-path :accessor project-root-path)
+   (utsushiyo-file-directory :initarg :utsushiyo-file-directory :accessor utsushiyo-file-directory)
    (project-config-dir :initarg :config-dir :accessor config-dir)))
 
 (defun make-project-env (project-name &key project-config-dir)
   (make-instance 'project-env
 		 :project-env-name project-name
 		 :project-root-path (find-system-dir project-name)
+		 :utsushiyo-file-directory "src/utsushiyo/"
 		 :config-dir (if project-config-dir
 				 project-config-dir
 				 (concatenate 'string
@@ -74,14 +103,13 @@ Project class
 
 (defgeneric ensure-project-env (project)
   (:method ((project project-env))
-    (make-directory (config-dir project))))
-
-(defgeneric ensure-project-sub-directory (project directory-name)
-  (:method ((project project-env) (directory-name string))
-    (make-directory
-     (format nil "~A~A/" (config-dir project) directory-name))))
-
-
+    (make-directory (config-dir project))
+    (copy-directory
+     (concatenate 'string
+		  (project-root-path project)
+		  (utsushiyo-file-directory project))
+     (config-dir project))))
+    
 (defgeneric delete-project-env (project)
   (:method ((project project-env))
     (delete-directory-and-files (config-dir project))))
@@ -93,79 +121,76 @@ Attribute utilities
 ;; (get-attribute (make-project-env "sample-project" :project-config-dir "/home/user/.sample-project/") "user/user-name") => "tomoki"
 (defgeneric get-attribute (project attribute-name))
 (defmethod get-attribute ((project project-env) (attribute-name string))
-  (let ((return-value nil)
-	(f-name (concatenate 'string (config-dir project) attribute-name)))
-    (with-open-file (file-var f-name :direction :input :if-does-not-exist :create)
-      (setf return-value (read-line file-var)))
-    (format nil "~A" return-value)))
+  (let ((f-name (concatenate 'string
+			     (config-dir project)
+			     attribute-name)))
+    (if (file-exists-p f-name)
+	(read-file-into-string f-name)
+	"")))
 (defmethod get-attribute ((project string) (attribute-name string))
-  (let ((return-value nil)
-	(f-name (concatenate 'string (config-dir (make-project-env project)) attribute-name)))
-    (with-open-file (file-var f-name :direction :input :if-does-not-exist :create)
-      (setf return-value (read-line file-var)))
-    (format nil "~A" return-value)))
+  (let ((f-name (concatenate 'string
+			     (config-dir (make-project-env project))
+			     attribute-name)))
+    (if (file-exists-p f-name)
+	(read-file-into-string f-name)
+	"")))
 
-
-(defgeneric get-attribute-sentence (project attribute-name))
-(defmethod get-attribute-sentence ((project project-env) (attribute-name string))
-  (let ((return-string "")
-	(f-name (concatenate 'string (config-dir project) attribute-name)))
-    (with-open-file (file-var f-name :direction :input :if-exists nil :if-does-not-exist nil)
-      (loop for line = (read-line file-var nil)
-	    while line
-	    do (setf return-string (format nil "~A~A~%" return-string line))))
-    (format nil "~A" return-string)))
-(defmethod get-attribute-sentence ((project string) (attribute-name string))
-  (let ((return-string "")
-	(f-name (concatenate 'string (config-dir (make-project-env project)) attribute-name)))
-    (with-open-file (file-var f-name :direction :input :if-exists nil :if-does-not-exist nil)
-      (loop for line = (read-line file-var nil)
-	    while line
-	    do (setf return-string (format nil "~A~A~%" return-string line))))
-    (format nil "~A" return-string)))
-
-;; (set-attribute "sample-project" "user/user-name" "tomoki")
-;; (set-attribute (make-project-env "sample-project" :project-config-dir "/home/user/.sample-project/") "user/user-name" "tomoki")
 (defgeneric set-attribute (project attribute-name attribute-content))
 (defmethod set-attribute ((project project-env) (attribute-name string) (attribute-content string))
-  (let ((f-name (concatenate 'string (config-dir project) attribute-name)))
-    (with-open-file (file-var f-name :direction :output :if-exists :overwrite :if-does-not-exist :create)
+  (let ((f-name (concatenate 'string
+			     (config-dir project)
+			     attribute-name)))
+    (with-open-file (file-var f-name :direction :output
+				     :if-exists :overwrite
+				     :if-does-not-exist :create)
       (write-line attribute-content file-var))))
 (defmethod set-attribute ((project string) (attribute-name string) (attribute-content string))
-  (let ((f-name (concatenate 'string (config-dir (make-project-env project)) attribute-name)))
-    (with-open-file (file-var f-name :direction :output :if-exists :overwrite :if-does-not-exist :create)
+  (let ((f-name (concatenate 'string
+			     (config-dir (make-project-env project))
+			     attribute-name)))
+    (with-open-file (file-var f-name :direction :output
+				     :if-exists :overwrite
+				     :if-does-not-exist :create)
       (write-line attribute-content file-var))))
 
 #|
 Help utilities
 |#
-(defgeneric defhelp (target-project-env command-name)
-  (:method ((target-project-env project-env) (command-name string))
-    (let ((base-file (concatenate 'string (project-root-path target-project-env) "src/helps/" command-name))
-	  (new-file-name (concatenate 'string (config-dir target-project-env) "helps/" command-name)))
-      (copy-file base-file new-file-name :overwrite t))))
-
-(defgeneric get-help (command-name project))
-(defmethod get-help ((help-command string) (project project-env))
-  (get-attribute-sentence project (concatenate 'string "helps/" help-command)))
-(defmethod get-help ((help-command string) (project string))
-  (get-attribute-sentence (make-project-env project) (concatenate 'string "helps/" help-command)))
+(defmacro defgetter (getter-name-symbol attribute-type-name)
+  `(let* ((package *package*)
+	  (*package* (find-package :utsushiyo)))
+     (defgeneric ,getter-name-symbol (project command-name)
+       (:method ((project string) (command-name string))
+	 (get-attribute
+	  (make-project-env project)
+	  (concatenate 'string
+		       ,attribute-type-name
+		       "/"
+		       command-name))))
+     (setf *package* package)))
 
 #|
 Bootstrapping
 |#
 (defparameter *utsushiyo-project*
-  (make-project-env "utsushiyo"))
+  (let ((project-name "utsushiyo"))
+    (make-instance 'project-env
+		   :project-env-name project-name
+		   :project-root-path (find-system-dir project-name)
+		   :utsushiyo-file-directory "src/utsushiyo-default/"
+		   :config-dir (concatenate 'string
+					    +user-home-dirname+
+					    ".utsushiyo/"
+					    project-name "/"))))
+
 
 (defun bootstrap ()
-  (ensure-project-env *utsushiyo-project*)
-  (progn
-    (ensure-project-sub-directory *utsushiyo-project* "helps")
-    (ensure-project-sub-directory *utsushiyo-project* "config")
-    (defhelp *utsushiyo-project* "example")
-    (defhelp *utsushiyo-project* "roswell-script")))
+  (ensure-project-env *utsushiyo-project*))
+
+(defgetter get-help "help")
+(defgetter get-config "config")
+(defgetter get-env "env")
 
 (defun project-config-bootstrap (project-env-name)
   (let ((project-env-instance (make-project-env project-env-name)))
-    (ensure-project-env project-env-instance)
-    (set-help project-env-instance "example")))
+    (ensure-project-env project-env-instance)))

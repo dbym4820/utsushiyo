@@ -1,5 +1,5 @@
 (defsystem "utsushiyo"
-  :version "0.2.0"
+  :version "0.3.0"
   :author "Tomoki ABURATANI"
   :license "MIT"
   :depends-on (:cl-ppcre
@@ -8,18 +8,27 @@
 	       :cl-fad
 	       :local-time
 	       :split-sequence)
-  :serial t
   :components ((:module "src"
                 :components
                 ((:file "utsushiyo")
-		 (:module "config"
+		 (:module "utsushiyo-default"
 		  :components
-		  ((:static-file "example-attr")))
-		 (:module "helps"
-		  :components
-		  ((:static-file "example")
-		   (:static-file "roswell-script"))))))
-  :description "Common Lisp Local Configuration Management Framework"
+		  ((:module "config"
+		    :components
+			    ((:static-file "version")))
+		   (:module "help"
+		    :components
+			    ((:static-file "bin-general-help")
+			     (:static-file "bin-get-attribute-help")
+			     (:static-file "bin-help-help")
+			     (:static-file "bin-init-help")
+			     (:static-file "bin-new-project-help")
+			     (:static-file "bin-set-attribute-help")
+			     (:static-file "template")))
+		   (:module "env"
+		    :components
+			    ((:static-file "example"))))))))
+  :description "Common Lisp Local Environment's values  Management Framework"
   :long-description
   #.(read-file-string
      (subpathname *load-pathname* "README.md"))

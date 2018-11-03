@@ -13,44 +13,108 @@ exec ros -Q -- $0 "$@"
   (:import-from :utsushiyo
   		:make-project-env
   		:delete-project-env
+		:ensure-project-env
   		:config-dir
   		:get-help
-                :project-config-bootstrap))
+		:*utsushiyo-project*
+		:bootstrap
+                :project-config-bootstrap
+		:get-help))
 (in-package :ros.script.utsushiyo)
 
-(defun main (&rest argv)
-  (destructuring-bind (&optional command arg1 arg2 arg3 &rest rest) argv
-    (declare (ignorable command arg1 arg2 arg3 rest))
-    ;; (format t "~A" (utsushiyo:get-help "roswell-script" utsushiyo::*utsushiyo-project*))))
-    (cond ((and
-    	    (or
-    	     (string= command "-h")
-    	     (string= command "help"))
-    	     arg1 arg2)
-    	   (format t "~A" (get-help arg1 arg2)))
-    	  ((or
-    	    (string= command "-h")
-    	    (string= command "help"))
-    	   (format t "~A" (utsushiyo:get-help "roswell-script" utsushiyo::*utsushiyo-project*)))
-    	  ((or (string= command "-i")
-    	       (string= command "init"))
-    	   (utsushiyo:bootstrap))
-    	  ((or
-    	    (string= command "-r"))
-    	   (string= command "conf-dir")
-    	   (format t "~A" (config-dir (make-project-env arg1))))
-    	  ((and
-    	    (or (string= command "-e") (string= command "new-project"))
-    	    arg1)
-    	   (format t "~A" (project-config-bootstrap arg1)))
-    	  ((or
-    	    (string= command "-s")
-    	    (string= command "set-attribute"))
-    	   (format t "~A" (utsushiyo:set-attribute arg1 arg2 arg3)))
-    	  ((or
-    	    (string= command "-g")
-    	    (string= command "get-attribute"))
-    	   (format t "~A" (utsushiyo:get-attribute arg1 arg2)))
-    	  (t
-    	   (format t "Invalid Input~%~A~&" "")))));;(get-help "roswell-script" "utsushiyo"))))))
+(defgeneric get-option-and-value (option argument))
+(defmethod get-option-and-value ((option string) (argument-list list))
+  (values
+   (when (position option argument-list :test #'string=)
+     (nth (1+ (position option argument-list :test #'string=))
+	  argument-list))
+   (when (find option argument-list :test #'string=) t)))
+(defmethod get-option-and-value ((option-list list) (argument-list list))
+  (loop for option in option-list
+	when (position option argument-list :test #'string=)
+	  return (values
+		  (when (position option argument-list :test #'string=)
+		    (nth (1+ (position option argument-list :test #'string=))
+			 argument-list))
+		  (when (find option argument-list :test #'string=) t))))
+
+(defmacro defmain ((arg) &body body)
+  `(defun main (&rest argv)
+     (declare (ignorable argv))
+     (let* ((tmparg (gensym))
+	    (,arg tmparg))
+       (setf ,arg argv)
+       (macrolet ((if-match ((sym (&rest arg-list)) &body body)
+		    `(let* ((tmp (gensym))
+			    (,sym tmp))
+		       (declare (ignorable ,sym))
+		       (multiple-value-bind (value t-f)
+			   (get-option-and-value '(,@arg-list) argv)
+			 (cond ((and value t-f) ;; option and value
+				(progn
+				  (setf ,sym value)
+				  (format t "~A" ,@body)))
+			       (t-f ;; only option
+				(progn
+				  (setf ,sym value)
+				  (format t "~A" ,@body)))
+			       (t ;; nothing
+				:unk))))))
+	 (labels ((gen-output (&rest conditions)
+		    (let ((retrieve-result
+			    (loop for x in conditions
+				  collect x)))
+		      (cond ((find-if-not #'(lambda (d)
+					      (equal :unk d))
+					  retrieve-result)
+			     ;; there is a not unknown parameter(option with value)
+			     (find-if-not #'(lambda (d)
+					      (equal :unk d))
+					  retrieve-result))
+			    ((not
+			      (remove-if #'(lambda (d)
+					     (equal :unk d))
+					 retrieve-result))
+			     ;; there is nothing which is matched the option name
+			     :unk)
+			    (t
+			     ;; there is nothing value, while there is a option
+			     "")))))
+	   (gen-output
+	    ,@body))))))
+
+(defmain (arg)
+  (if-match (project ("help" "--help" "-h"))
+	    (cond ((equal :unk project) "")
+		  ((string= "" project)
+		   (utsushiyo:get-help utsushiyo::*utsushiyo-project* "bin-general-help"))
+		  (t
+		   (utsushiyo:get-help project (third arg)))))
+  (if-match (project ("init" "--init" "-i"))
+	    (cond ((equal :unk project) "")
+		  ((string= "" project)
+		   (utsushiyo:get-help project "bin-init-help"))
+		  (t (utsushiyo:bootstrap))))
+  (if-match (project ("new-project" "--new-project" "-n"))
+	    (cond ((equal :unk project) "")
+		  ((string= "" project)
+		   (utsushiyo:get-help utsushiyo::*utsushiyo-project* "bin-new-project-help"))
+		  (t
+		   (utsushiyo:project-config-bootstrap project))))
+  (if-match (project ("set-attribute" "--set-attribute" "-s"))
+	    (cond ((equal :unk project) "")
+		  ((string= "" project)
+		   (utsushiyo:get-help utsushiyo::*utsushiyo-project* "bin-set-attribute-help"))
+		  (t
+		   (utsushiyo:set-attribute project (second arg) (third arg)))))
+  (if-match (project ("get-attribute" "--get-attribute" "-g"))
+	    (cond ((equal :unk project) "")
+		  ((string= "" project)
+		   (utsushiyo:get-help utsushiyo::*utsushiyo-project* "bin-get-attribute-help"))
+		  (t
+		   (utsushiyo:get-attribute project (second arg))))))
+
+
+
+
 ;;; vim: set ft=lisp lisp:
