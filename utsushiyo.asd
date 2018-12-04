@@ -7,7 +7,8 @@
 	       :alexandria
 	       :cl-fad
 	       :local-time
-	       :split-sequence)
+	       :split-sequence
+	       :cl-project)
   :components ((:module "src"
                 :components
                 ((:file "utsushiyo")
@@ -28,7 +29,7 @@
 		   (:module "env"
 		    :components
 			    ((:static-file "example"))))))))
-  :description "Common Lisp Local Environment's values  Management Framework"
+  :description "Common Lisp Local Environment's values Management Framework"
   :long-description
   #.(read-file-string
      (subpathname *load-pathname* "README.md"))

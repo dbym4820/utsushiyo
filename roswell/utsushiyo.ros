@@ -65,8 +65,6 @@ exec ros -Q -- $0 "$@"
 			  collect `(if-match (,(first (first b)) ,argv ,(second (first b)))
 				     ,(second b)))))))
        (eval code))))
-       ;;(eval code))))
-
 
 (defmain (arg)
   ((project ("help" "--help" "-h"))

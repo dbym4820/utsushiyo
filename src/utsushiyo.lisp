@@ -9,6 +9,8 @@
 		:delete-file-if-exists)
   (:import-from :uiop/common-lisp
                 :user-homedir-pathname)
+  (:import-from :cl-project
+		:make-project)
   (:import-from :cl-fad
 		:copy-file
 	        :list-directory
@@ -50,21 +52,26 @@ Constant valiables
 Directory utilities
 |#
 (defun check-directory-duplicate-p (directory-pathname)
+  "return t when target directory has been existed"
   (directory-exists-p directory-pathname))
 
 (defun make-directory (new-directory-pathname)
+  "make directory when target directory has not created yet"
   (unless (check-directory-duplicate-p new-directory-pathname)
     (ensure-directories-exist new-directory-pathname)))
 
 (defun make-directories (&rest pathnames)
+  "make multi-directories"
   (loop for path in pathnames
 	unless (check-directory-duplicate-p path)
 	  do (make-directory path)))
 
 (defun find-system-dir (system-name-symbol)
+  "retrieve target system directory which is based on quicklisp"
   (eval `(namestring (directory-namestring (asdf:system-relative-pathname ',system-name-symbol "")))))
 
 (defun copy-directory (from to)
+  "copy directory directory"
   (flet ((rel-path (parent child)
            (subseq (namestring child)
                    (length (namestring parent)))))
@@ -89,11 +96,14 @@ Project class
    (utsushiyo-file-directory :initarg :utsushiyo-file-directory :accessor utsushiyo-file-directory)
    (project-config-dir :initarg :config-dir :accessor config-dir)))
 
-(defun make-project-env (project-name &key project-config-dir)
+(defun make-project-env (project-name &key utsushiyo-file-directory project-config-dir)
+  "make prooject environment configuration class"
   (make-instance 'project-env
 		 :project-env-name project-name
 		 :project-root-path (find-system-dir project-name)
-		 :utsushiyo-file-directory "src/utsushiyo/"
+		 :utsushiyo-file-directory (if utsushiyo-file-directory
+					       utsushiyo-file-directory
+					       "src/utsushiyo/")
 		 :config-dir (if project-config-dir
 				 project-config-dir
 				 (concatenate 'string
@@ -179,6 +189,7 @@ Help utilities
 #|
 Bootstrapping
 |#
+;;; make-project-envでしないのは，utsushiyo/utsushiyoというディレクトリを作るとバグるから
 (defparameter *utsushiyo-project*
   (let ((project-name "utsushiyo"))
     (make-instance 'project-env
@@ -190,8 +201,8 @@ Bootstrapping
 					    ".utsushiyo/"
 					    project-name "/"))))
 
-
 (defun bootstrap ()
+  "ensure utsushiyo project oneselves' configulation"
   (ensure-project-env *utsushiyo-project*))
 
 (defgetter get-help "help")
@@ -199,5 +210,6 @@ Bootstrapping
 (defgetter get-env "env")
 
 (defun project-config-bootstrap (project-env-name)
+  "ensure any quicklisp project's configuration"
   (let ((project-env-instance (make-project-env project-env-name)))
     (ensure-project-env project-env-instance)))

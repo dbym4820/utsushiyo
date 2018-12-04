@@ -13,16 +13,10 @@ Management Application Configuration via Local File about Configuration like bel
 ```
 # When you want to create a project named "blah" and define configuration in Own home directory
 
-$ utsushiyo -c blah example
-$ ls ~/.blah/
-
-$ cat ~/.blah/helps/example
-Example-command: pupose of this command
-
-Usage: how to use this command (e.g. $ project-name example-command)
-
-explanation about this command
-
+# utsushiyo [set-attribute | --set-attribute | -s] 
+$ utsushiyo -s sample-cl-project sample-attribute "it is sample attribute value"
+$ cat ~/.utsushiyo/sample-cl-project/sample-attribute
+it is sample attribute value
 ```
 
 You have to load the project which you wanna create configs by quicklisp (or roswell) in your local environment before you use utsushiyo.
@@ -32,43 +26,32 @@ You have to load the project which you wanna create configs by quicklisp (or ros
 Set/Get environment parameter via Common Lisp.
 
 ```
-CL-USER> (ql:quickload :utsushiyo)
-To load "utsushiyo":
-  Load 1 ASDF system:
-    utsushiyo
-; Loading "utsushiyo"
-[package utsushiyo].
-(:UTSUSHIYO)
-CL-USER> (utsushiyo:set-attribute "sample-project" "test-attrbute" "blah blah blah")
+CL-USER> (utsushiyo:set-attribute "sample-project" "test-attribute" "blah blah blah")
 "blah blah blah"
 CL-USER> (utsushiyo:get-attribute "sample-project" "test-attribute")
 "blah blah blah"
 
 =================================================================================
 
-$ ls ~/.sample-project
-helps  test-attribute
-$ cat ~/.sample-project/test-attribute
-blah blah blah
 ```
 
 ## Installation
 
-* As roswell script
+* Via roswell
 
 ```
 $ ros install dbym4820/utsushiyo
-...
-$ utsushiyo -g your-project-name example
-Example-command: pupose of this command
-
-Usage: how to use this command (e.g. $ project-name example-command)
-
-explanation about this command
-
 ```
 
-* With quicklisp
+* Via quicklisp
+
+```
+# download source code from github
+$ git clone https://github.com/dbym4820/utsushiyo.git
+
+# make path to quicklisp local-project directory
+$ ln -nfs /path/to/utsushiyo/directory /path/to/quicklisp/local-projects/
+```
 
 ```
 CL-USER> (ql:quickload :utsushiyo)
@@ -78,16 +61,6 @@ To load "utsushiyo":
 ; Loading "utsushiyo"
 [package utsushiyo].
 (:UTSUSHIYO)
-CL-USER> (utsushiyo:project-config-bootstrap "your-project")
-
-; No value
-(utsushiyo:get-help "example" "utsushiyo")
-"Example-command: pupose of this command
-
-Usage: how to use this command (e.g. $ project-name example-command)
-
-explanation about this command
-"
 ```
 
 ## Requirement
@@ -99,11 +72,17 @@ You need to make your project composed as same as below
 ├ README.md
 ├ your-common-lisp.asd
 ├ src/
-|	├ your-common-lisp-project.lisp
-|	├ **helps/**
-|		├ **help-sentence**
+|  ├ your-common-lisp-project.lisp
+|  ├...  
+|  ├ *utsushiyo/**
+|	  ├ **attribute**
+|        ├*attribute-value** 
 ├ t/
 ```
+
+## Supported options (as roswell script)
+
+developping now...
 
 ## Author
 
