@@ -1,14 +1,11 @@
 (defsystem "utsushiyo"
-  :version "0.3.0"
+  :version
+  #.(read-file-string
+     (subpathname *load-pathname* "src/utsushiyo-default/config/version"))
   :author "Tomoki ABURATANI"
   :license "MIT"
-  :depends-on (:cl-ppcre
-	       :uiop
-	       :alexandria
-	       :cl-fad
-	       :local-time
-	       :split-sequence
-	       :cl-project)
+  :depends-on (:alexandria
+	       :cl-fad)
   :components ((:module "src"
                 :components
                 ((:file "utsushiyo")

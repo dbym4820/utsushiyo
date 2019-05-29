@@ -2,16 +2,11 @@
 (defpackage utsushiyo
   (:use :cl)
   (:import-from :alexandria
-                :read-file-into-string)
-  (:import-from :uiop
-                :directory-exists-p
-		:file-exists-p
-		:delete-file-if-exists)
-  (:import-from :uiop/common-lisp
-                :user-homedir-pathname)
-  (:import-from :cl-project
-		:make-project)
+                :read-file-into-string
+		:write-string-into-file)
   (:import-from :cl-fad
+		:file-exists-p
+                :directory-exists-p
 		:copy-file
 	        :list-directory
 	        :walk-directory
@@ -19,34 +14,36 @@
 		:directory-pathname-p
 		:merge-pathnames-as-directory
                 :merge-pathnames-as-file)
-  (:import-from :cl-ppcre
-		:split)
-  (:export :project-env
-           :project-env-name
-	   :project-root-path
-           :config-dir
-           :make-project-env
-	   :ensure-project-env
-	   :delete-project-env
-           :get-attribute
-	   :set-attribute
-	   :ensure-attribute
-	   :get-help
-	   :defhelp
-	   :bootstrap
-	   :project-config-bootstrap
-	   :find-system-dir
-	   :copy-file
-	   :defgetter
-	   :get-help
-	   :get-config
-	   :get-env))
+  (:export 
+   :set-environment-directory
+   :make-project-env
+   :ensure-project-env
+   :delete-project-env
+   :get-attribute
+   :set-attribute
+   :ensure-attribute
+   :bootstrap
+   :init
+   :defgetter
+   :get-help
+   :get-config
+   :get-env))
 (in-package :utsushiyo)
 
 #| 
-Constant valiables
+Constant variables
 |#
 (defconstant +user-home-dirname+ (namestring (user-homedir-pathname)))
+
+(defparameter *environment-directory* +user-home-dirname+)
+(defun set-environment-directory (directory)
+  (cond ((directory-pathname-p directory)
+	 (setf *environment-directory* directory))
+	((pathnamep directory)
+	 (setf *environment-directory* (namestring directory)))
+	(t
+	 (error (format nil "The argument ~A is not directory" directory)))))
+
 
 #|
 Directory utilities
@@ -68,7 +65,7 @@ Directory utilities
 
 (defun find-system-dir (system-name-symbol)
   "retrieve target system directory which is based on quicklisp"
-  (eval `(namestring (directory-namestring (asdf:system-relative-pathname ',system-name-symbol "")))))
+  (namestring (directory-namestring (asdf:system-relative-pathname system-name-symbol ""))))
 
 (defun copy-directory (from to)
   "copy directory directory"
@@ -107,7 +104,7 @@ Project class
 		 :config-dir (if project-config-dir
 				 project-config-dir
 				 (concatenate 'string
-					      +user-home-dirname+
+					      *environment-directory*
 					      ".utsushiyo/"
 					      project-name "/"))))
 
@@ -150,18 +147,14 @@ Attribute utilities
   (let ((f-name (concatenate 'string
 			     (config-dir project)
 			     attribute-name)))
-    (with-open-file (file-var f-name :direction :output
-				     :if-exists :overwrite
-				     :if-does-not-exist :create)
-      (write-line attribute-content file-var))))
+    (write-string-into-file attribute-content file-var :if-exists :supersede :if-does-not-exist :create)))
+
 (defmethod set-attribute ((project string) (attribute-name string) (attribute-content string))
   (let ((f-name (concatenate 'string
 			     (config-dir (make-project-env project))
 			     attribute-name)))
-    (with-open-file (file-var f-name :direction :output
-				     :if-exists :overwrite
-				     :if-does-not-exist :create)
-      (write-line attribute-content file-var))))
+    (write-string-into-file attribute-content file-var :if-exists :supersede :if-does-not-exist :create)))
+
 
 #|
 Help utilities
@@ -189,7 +182,6 @@ Help utilities
 #|
 Bootstrapping
 |#
-;;; make-project-envでしないのは，utsushiyo/utsushiyoというディレクトリを作るとバグるから
 (defparameter *utsushiyo-project*
   (let ((project-name "utsushiyo"))
     (make-instance 'project-env
@@ -197,7 +189,7 @@ Bootstrapping
 		   :project-root-path (find-system-dir project-name)
 		   :utsushiyo-file-directory "src/utsushiyo-default/"
 		   :config-dir (concatenate 'string
-					    +user-home-dirname+
+					    *environment-directory*
 					    ".utsushiyo/"
 					    project-name "/"))))
 
@@ -209,7 +201,10 @@ Bootstrapping
 (defgetter get-config "config")
 (defgetter get-env "env")
 
-(defun project-config-bootstrap (project-env-name)
-  "ensure any quicklisp project's configuration"
-  (let ((project-env-instance (make-project-env project-env-name)))
+(defun init (project-env-name &key (project-config-dir *environment-directory*))
+  "ensure any project's configuration"
+  (bootstrap)
+  (let ((project-env-instance (make-project-env project-env-name :project-config-dir project-config-dir)))
     (ensure-project-env project-env-instance)))
+
+

@@ -1,4 +1,4 @@
-# Utsushiyo - Common Lisp Local Configuration Management Framework -
+# Utsushiyo - Common Lisp Local Environment Attributes Manager -
 
 <img src="./img/icon.png" width="300px" />
 
@@ -8,7 +8,10 @@
 
 ## Usage
 
-Management Application Configuration via Local File about Configuration like below.
+Management Application Configuration via Local File, for instance, generating help messege, or setting server port number by local file.
+
+This system intend interaction between system and user.
+
 
 ```
 # When you want to create a project named "blah" and define configuration in Own home directory
@@ -26,10 +29,12 @@ You have to load the project which you wanna create configs by quicklisp (or ros
 Set/Get environment parameter via Common Lisp.
 
 ```
-CL-USER> (utsushiyo:set-attribute "sample-project" "test-attribute" "blah blah blah")
-"blah blah blah"
-CL-USER> (utsushiyo:get-attribute "sample-project" "test-attribute")
-"blah blah blah"
+CL-USER> (utsushiyo:set-attribute "clkedit-server(project-name)" "config/port" "5000")
+"5000"
+
+;; => cat ~/.utsushiyo/clkedit-server/config/port ;=> 5000
+CL-USER> (utsushiyo:get-attribute "clkedit-server" "config/port")
+"5000"
 
 =================================================================================
 
@@ -74,9 +79,8 @@ You need to make your project composed as same as below
 ├ src/
 |  ├ your-common-lisp-project.lisp
 |  ├...  
-|  ├ *utsushiyo/**
-|	  ├ **attribute**
-|        ├*attribute-value** 
+|  ├utsushiyo/
+|	  |- attribute => attribute-value
 ├ t/
 ```
 
