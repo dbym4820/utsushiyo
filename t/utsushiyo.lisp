@@ -1,31 +1,25 @@
 (defpackage utsushiyo-test
-  (:use :cl
-        :utsushiyo
-        :prove))
+  (:use :cl :prove)
+  (:import-from :utsushiyo
+		:bootstrap :init
+		:set-attribute :get-attribute))
 (in-package :utsushiyo-test)
 
 ;; NOTE: To run this test file, execute `(asdf:test-system :utsushiyo)' in your Lisp.
 (setf *enable-colors* nil)
 
-(plan 2)
+(plan 4)
 
 (subtest "project-env test"
-	 (ok (not (bootstrap))))
+  (ok (not (bootstrap))))
 
-(subtest "environment create completition test"
-	 (let ((test-instance
-		 (make-instance 'utsushiyo::project-env
-				:project-env-name "utsushiyo"
-				:project-root-path (namestring
-						    (directory-namestring
-						     (asdf:system-relative-pathname 'utsushiyo "src/utsushiyo-default")))
-				:config-dir (concatenate 'string utsushiyo::+user-home-dirname+ ".utsushiyo/"))))
-	   (is-type (get-help (make-project-env "utsushiyo") "bin-general-help") 'string)
-	   (is (utsushiyo::project-env-name test-instance) "utsushiyo")
-	   (is-type (utsushiyo::project-root-path test-instance) 'string)
-	   (is (utsushiyo::config-dir test-instance)
-	       (concatenate 'string
-			    utsushiyo::+user-home-dirname+
-			    ".utsushiyo/"))))
+(subtest "make 'sample' project environment test"
+  (pass (init "sample-project")))
+
+(subtest "set-attribute test"
+  (pass (set-attribute "sample-project" "sample-attribute" "日本語もいける")))
+
+(subtest "get-attribute test"
+  (is (get-attribute "sample-project" "sample-attribute") "日本語もいける"))
 		 
 (finalize)

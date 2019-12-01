@@ -5,7 +5,8 @@
   :author "Tomoki ABURATANI"
   :license "MIT"
   :depends-on (:alexandria
-	       :cl-fad)
+	       :cl-fad
+	       :split-sequence)
   :components ((:module "src"
                 :components
                 ((:file "utsushiyo")

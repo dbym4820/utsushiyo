@@ -1,7 +1,5 @@
 # Utsushiyo - Common Lisp Local Environment Attributes Manager -
 
-<img src="./img/icon.png" width="300px" />
-
 [![Build Status](https://travis-ci.org/dbym4820/utsushiyo.svg?branch=master)](https://travis-ci.org/dbym4820/utsushiyo)
 [![Quicklisp](http://quickdocs.org/badge/utsushiyo.svg)](http://quickdocs.org/utsushiyo/)
 
@@ -10,30 +8,15 @@
 
 Management Application Configuration via Local File, for instance, generating help messege, or setting server port number by local file.
 
-This system intend interaction between system and user.
-
-
-```
-# When you want to create a project named "blah" and define configuration in Own home directory
-
-# utsushiyo [set-attribute | --set-attribute | -s] 
-$ utsushiyo -s sample-cl-project sample-attribute "it is sample attribute value"
-$ cat ~/.utsushiyo/sample-cl-project/sample-attribute
-it is sample attribute value
-```
-
-You have to load the project which you wanna create configs by quicklisp (or roswell) in your local environment before you use utsushiyo.
-
-## Other Usage
-
 Set/Get environment parameter via Common Lisp.
 
 ```
-CL-USER> (utsushiyo:set-attribute "clkedit-server(project-name)" "config/port" "5000")
+CL-USER> (utsushiyo:init "any-project-name" :project-root-path "path/to/project-root/")
+CL-USER> (utsushiyo:set-attribute "any-project-name" "port" "5000")
 "5000"
 
-;; => cat ~/.utsushiyo/clkedit-server/config/port ;=> 5000
-CL-USER> (utsushiyo:get-attribute "clkedit-server" "config/port")
+;; => cat ~/.utsushiyo/any-project/port ;=> 5000
+CL-USER> (utsushiyo:get-attribute "any-project" "port")
 "5000"
 
 =================================================================================
@@ -46,26 +29,6 @@ CL-USER> (utsushiyo:get-attribute "clkedit-server" "config/port")
 
 ```
 $ ros install dbym4820/utsushiyo
-```
-
-* Via quicklisp
-
-```
-# download source code from github
-$ git clone https://github.com/dbym4820/utsushiyo.git
-
-# make path to quicklisp local-project directory
-$ ln -nfs /path/to/utsushiyo/directory /path/to/quicklisp/local-projects/
-```
-
-```
-CL-USER> (ql:quickload :utsushiyo)
-To load "utsushiyo":
-  Load 1 ASDF system:
-    utsushiyo
-; Loading "utsushiyo"
-[package utsushiyo].
-(:UTSUSHIYO)
 ```
 
 ## Requirement

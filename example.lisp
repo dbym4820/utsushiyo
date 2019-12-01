@@ -1,0 +1,1 @@
+(utsushiyo:init "")
