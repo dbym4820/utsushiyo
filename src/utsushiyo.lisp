@@ -4,6 +4,8 @@
   (:import-from :alexandria
                 :read-file-into-string
 		:write-string-into-file)
+  (:import-from :split-sequence
+		:split-sequence)
   (:import-from :cl-fad
 		:file-exists-p
                 :directory-exists-p
@@ -63,6 +65,12 @@ Directory utilities
 	unless (check-directory-duplicate-p path)
 	  do (make-directory path)))
 
+(defun decompose-pathname-string (pathname-string)
+  (split-sequence "/" pathname-string :test #'string=))
+
+(defun ensure-path-existence (pathname-string)
+  (make-directories (decompose-pathname-string pathname-string)))
+
 (defun find-system-dir (system-name-symbol)
   "retrieve target system directory which is based on quicklisp"
   (namestring (directory-namestring (asdf:system-relative-pathname system-name-symbol ""))))
@@ -93,11 +101,11 @@ Project class
    (utsushiyo-file-directory :initarg :utsushiyo-file-directory :accessor utsushiyo-file-directory)
    (project-config-dir :initarg :config-dir :accessor config-dir)))
 
-(defun make-project-env (project-name &key utsushiyo-file-directory project-config-dir)
+(defun make-project-env (project-name &key project-root-path utsushiyo-file-directory project-config-dir)
   "make prooject environment configuration class"
   (make-instance 'project-env
 		 :project-env-name project-name
-		 :project-root-path (find-system-dir project-name)
+		 :project-root-path project-root-path
 		 :utsushiyo-file-directory (if utsushiyo-file-directory
 					       utsushiyo-file-directory
 					       "src/utsushiyo/")
@@ -111,11 +119,12 @@ Project class
 (defgeneric ensure-project-env (project)
   (:method ((project project-env))
     (make-directory (config-dir project))
-    (copy-directory
-     (concatenate 'string
-		  (project-root-path project)
-		  (utsushiyo-file-directory project))
-     (config-dir project))))
+    (when (project-root-path project)
+      (copy-directory
+       (concatenate 'string
+		    (project-root-path project)
+		    (utsushiyo-file-directory project))
+       (config-dir project)))))
     
 (defgeneric delete-project-env (project)
   (:method ((project project-env))
@@ -147,14 +156,14 @@ Attribute utilities
   (let ((f-name (concatenate 'string
 			     (config-dir project)
 			     attribute-name)))
-    (write-string-into-file attribute-content file-var :if-exists :supersede :if-does-not-exist :create)))
+    ;;(when (directory-exists-p (directory-namestring f-name))
+      (write-string-into-file attribute-content f-name :if-exists :supersede :if-does-not-exist :create)))
 
 (defmethod set-attribute ((project string) (attribute-name string) (attribute-content string))
   (let ((f-name (concatenate 'string
 			     (config-dir (make-project-env project))
 			     attribute-name)))
-    (write-string-into-file attribute-content file-var :if-exists :supersede :if-does-not-exist :create)))
-
+    (write-string-into-file attribute-content f-name :if-exists :supersede :if-does-not-exist :create)))
 
 #|
 Help utilities
@@ -201,10 +210,23 @@ Bootstrapping
 (defgetter get-config "config")
 (defgetter get-env "env")
 
-(defun init (project-env-name &key (project-config-dir *environment-directory*))
-  "ensure any project's configuration"
-  (bootstrap)
-  (let ((project-env-instance (make-project-env project-env-name :project-config-dir project-config-dir)))
-    (ensure-project-env project-env-instance)))
-
+(defun init (project-env-name &key project-root-path
+				(utsushiyo-file-directory "src/utsushiyo/")
+				(project-config-dir (concatenate 'string
+								 *environment-directory*
+								 ".utsushiyo/"
+								 project-env-name "/")))
+  "ensure any project's configuration
+usage example:
+  (utsushiyo:init \"sample\" :project-root-path \"~/path/to/project/directory\"
+                             :utsushiyo-file-directory \"config/\")
+"
+  (progn
+    (bootstrap)
+    (let ((project-env-instance
+	    (make-project-env project-env-name
+			      :project-root-path project-root-path
+			      :utsushiyo-file-directory utsushiyo-file-directory
+			      :project-config-dir project-config-dir)))
+      (ensure-project-env project-env-instance))))
 
