@@ -17,6 +17,7 @@
 		:merge-pathnames-as-directory
                 :merge-pathnames-as-file)
   (:export 
+   :find-system-dir
    :set-environment-directory
    :make-project-env
    :ensure-project-env
@@ -26,7 +27,6 @@
    :ensure-attribute
    :bootstrap
    :init
-   :defgetter
    :get-help
    :get-config
    :get-env))
