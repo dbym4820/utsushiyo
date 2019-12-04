@@ -18,6 +18,7 @@
                 :merge-pathnames-as-file)
   (:export 
    :find-system-dir
+   :exist-env-p
    :set-environment-directory
    :make-project-env
    :ensure-project-env
@@ -115,6 +116,16 @@ Project class
 					      *environment-directory*
 					      ".utsushiyo/"
 					      project-name "/"))))
+
+(defgeneric exist-env-p (env))
+(defmethod exist-env-p ((env project-env))
+  (directory-exists-p (config-dir env)))
+(defmethod exist-env-p ((env string))
+  (directory-exists-p
+   (concatenate 'string
+		*environment-directory*
+		".utsushiyo/"
+		env "/")))
 
 (defgeneric ensure-project-env (project)
   (:method ((project project-env))
